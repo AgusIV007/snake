@@ -3,6 +3,7 @@ import pygame
 from juegos import Snake
 from juegos import Ventana
 from jugadores import Random, IA
+import threading
 
 JUGADORES_PERMITIDOS = {"ia": IA, "random": Random}
 
@@ -16,9 +17,22 @@ if __name__ == "__main__":
         entrenar = sys.argv[2].lower()
         file_path = sys.argv[3]
         
-        juego = Snake(16)  # Crear el objeto juego antes de la ventana
+        # Crear el objeto juego antes de la ventana
+        juego = Snake(16)  
+        
+        # Inicializar el jugador
+        if tipo_jugador in JUGADORES_PERMITIDOS:
+            jugador = JUGADORES_PERMITIDOS[tipo_jugador](juego)
+        else:
+            raise Exception("Nombre de jugador no conocido")
         ventana = Ventana()
-        ventana.ejecutar(juego)  # Pasar el juego a la ventana
+
+        # Inicializar la ventana
+        jugador_thread = threading.Thread(target=jugador.jugar)
+        jugador_thread.start()
+
+        # Ejecutar la ventana
+        ventana.ejecutar(juego)
         
     except IndexError:
         print("Error: No se proporcionaron suficientes argumentos.")
@@ -28,7 +42,6 @@ if __name__ == "__main__":
         print(f"Error inesperado: {e}")
         print_help()
         sys.exit(1)
-
     if tipo_jugador in JUGADORES_PERMITIDOS:
         jugador = JUGADORES_PERMITIDOS[tipo_jugador](juego)
     else:

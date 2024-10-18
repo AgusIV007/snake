@@ -11,16 +11,12 @@ class Random():
         while True:
             # Elegir un movimiento aleatorio
             self.juego.direccion = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)])  # Abajo, Derecha, Arriba, Izquierda
-            
-            # Mover la serpiente
+            # Move  r la serpiente
             self.juego.step()
             
-            # Lógica para verificar si el juego ha terminado
-            if self.juego.longitud <= 0:
-                break
-            
+            # Lógica para verificar si el juego ha terminado            
             # Esperar un poco para que la serpiente no se mueva demasiado rápido
-            pygame.time.delay(200)
+            pygame.time.delay(10)
 
     def entrenar(self):
         raise NotImplementedError

@@ -37,6 +37,7 @@ class Snake():
         if nueva_cabeza == self.posicion_manzana:
             self.longitud += 1  # Aumentar longitud
             self.posicion_manzana = self.generar_manzana()  # Generar nueva manzana
+            self.posicion_serpiente.insert(0, nueva_cabeza)  
         else:
             # Agregar nueva cabeza y eliminar la cola
             self.posicion_serpiente.insert(0, nueva_cabeza)

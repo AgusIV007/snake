@@ -9,18 +9,24 @@ class Random():
     
     def jugar(self):
         while True:
-            # Elegir un movimiento aleatorio
-            self.juego.direccion = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)])  # Abajo, Derecha, Arriba, Izquierda
-            # Move  r la serpiente
+            direccion_actual1 = self.juego.direccion[0]
+            direccion_actual2 = self.juego.direccion[1]
+            direccion_actual_opuesta = self.obtenerDireccionOpuesta(direccion_actual1, direccion_actual2)
+            direcion_nueva = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)]) # Abajo, Derecha, Arriba, Izquierda
+            while True:
+                if (direccion_actual_opuesta != direcion_nueva):
+                    self.juego.direccion = direcion_nueva
+                    break
+                direcion_nueva = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)]) 
+            self.juego.direccion = direcion_nueva 
             self.juego.step()
-            
-            # Lógica para verificar si el juego ha terminado            
-            # Esperar un poco para que la serpiente no se mueva demasiado rápido
-            pygame.time.delay(10)
+            if self.juego.longitud <= 0:
+                break
+            pygame.time.delay(150)
 
-    def entrenar(self):
-        raise NotImplementedError
-
+    def obtenerDireccionOpuesta(self, direccion_actual1, direccion_actual2):
+        nuevaDireccion = (direccion_actual1 * -1, direccion_actual2 * -1) 
+        return nuevaDireccion
 
 class IA():
     def __init__(self, juego):

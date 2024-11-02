@@ -3,112 +3,109 @@ import pickle
 import random
 import pygame
 
+# class Random():
+#     def __init__(self, juego):
+#         self.juego = juego
+
+#     def jugar(self):
+#         while True:
+#             accion = random.choice([0, 1, 2])  # Generar acción aleatoria
+#             estado, recompensa, termino = self.juego.step(accion)
+#             if termino:
+#                 break
+#             pygame.time.delay(150)
+
 class Random():
     def __init__(self, juego):
         self.juego = juego
     
     def jugar(self):
+        print("hah")
         while True:
-            direccion_actual1 = self.juego.direccion[0]
-            direccion_actual2 = self.juego.direccion[1]
-            direccion_actual_opuesta = self.obtenerDireccionOpuesta(direccion_actual1, direccion_actual2)
-            direcion_nueva = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)]) # Abajo, Derecha, Arriba, Izquierda
-            while True:
-                if (direccion_actual_opuesta != direcion_nueva):
-                    self.juego.direccion = direcion_nueva
-                    break
-                direcion_nueva = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)]) 
-            self.juego.direccion = direcion_nueva 
-            self.juego.step()
-            if self.juego.longitud <= 0:
-                break
-            pygame.time.delay(150)
-
-    def obtenerDireccionOpuesta(self, direccion_actual1, direccion_actual2):
-        nuevaDireccion = (direccion_actual1 * -1, direccion_actual2 * -1) 
-        return nuevaDireccion
+            direcion_nueva = random.choice([0, 1, 2])
+            step = self.juego.step(direcion_nueva)
+            print(step)
+            # if step != None and step[2]: 
+            #     break
+            print("hola")
+            pygame.time.delay(120)
 
 class IA():
     def __init__(self, juego):
         self.juego = juego
         self.path = None
         self.Q = {}
-        self.alpha = 0.1  # Tasa de aprendizaje
-        self.gamma = 0.9  # Factor de descuento
-        self.epsilon = 0.1  # Tasa de exploración
-        self.episodios = 1000  # Número de episodios para entrenar
+
+        ### Completar
 
     def set_path(self, path):
         self.path = path
 
+    # Juega al juego hasta que este termine, cada vez que mueve (en cada step) decide cual es la mejor accion segun el diccionario Q.
     def jugar(self):
-        estado = self.obtener_estado()
+        direcion_nueva = random.choice([0, 1, 2])
+        estado, recompensa, termino = self.juego.step(direcion_nueva)
         while True:
-            if random.random() < self.epsilon:
-                # Exploración: elige un movimiento aleatorio
-                accion = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)])
-            else:
-                # Explotación: elige el mejor movimiento conocido
-                acciones = self.Q.get(estado, {})
-                accion = max(acciones, key=acciones.get, default=(0, 1))
-
-            self.juego.direccion = accion
-            self.juego.step()
-
-            # Actualiza el estado y la recompensa
-            nuevo_estado = self.obtener_estado()
-            recompensa = self.calcular_recompensa()
-
-            # Actualizar la tabla Q
-            self.Q.setdefault(estado, {})
-            self.Q[estado][accion] = self.Q[estado].get(accion, 0) + self.alpha * (recompensa + self.gamma * max(self.Q.get(nuevo_estado, {}).values(), default=0) - self.Q[estado][accion])
-
+            if estado not in self.Q:
+                self.Q[estado] = [0, 0, 0]
+            direcion_nueva = self.obtener_mejor_opcion(self.Q[estado])
+            print(self.Q, recompensa)
+            pygame.time.delay(20)
+            nuevo_estado, recompensa, termino = self.juego.step(direcion_nueva)
+            mejor_opcion = [0, 0, 0]
+            if nuevo_estado in self.Q:
+                mejor_opcion = self.Q[nuevo_estado]
+            self.Q[estado][direcion_nueva] += int(0.05 * (recompensa * 20 - self.Q[estado][direcion_nueva] + self.obtener_mejor_opcion(mejor_opcion)))
             estado = nuevo_estado
+            # if step != None and step[2]: 
+            #     break
 
+    def obtener_mejor_opcion(self, estado):
+        if estado[0] == estado[1] and estado[1] == estado[2]:
+            return random.choice([0, 1, 2])
+        if estado[0] == estado[1]:
+            if estado[0] > estado[2]:
+                return random.choice([0, 1])
+            else:
+                return 2
+        if estado[0] == estado[2]:
+            if estado[0] > estado[1]:
+                return random.choice([0, 2])
+            else:
+                return 1
+        if estado[2] == estado[1]:
+            if estado[2] > estado[0]:
+                return random.choice([0, 1])
+            else:
+                return 0
+        return 0
+        
+    # Juega el juego muchas veces y en cada vez completa la informacion de la tabla Q, en base al aprendizaje observado.
     def entrenar(self):
-        for episodio in range(self.episodios):
-            self.juego.reset()
-            estado = self.obtener_estado()
-            while True:
-                if random.random() < self.epsilon:
-                    # Exploración: elige un movimiento aleatorio
-                    accion = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0)])
-                else:
-                    # Explotación: elige el mejor movimiento conocido
-                    acciones = self.Q.get(estado, {})
-                    accion = max(acciones, key=acciones.get, default=(0, 1))
+        partidas = 0
+        max_partidas = 450000  # Cambiar este valor a un número mayor para entrenar más partidas
+        for i in range(300000):
+            jugando = True
+            estado_anterior = self.juego.reset()
 
-                self.juego.direccion = accion
-                self.juego.step()
+            if estado_anterior not in self.Q:
+                self.Q[estado_anterior] = [0, 0, 0]
 
-                nuevo_estado = self.obtener_estado()
-                recompensa = self.calcular_recompensa()
+            while jugando:
+                accion = self.get_max_action(self.Q[estado_anterior])
+                estado, jugando, recompensa = self.juego.step(accion)
 
-                # Actualizar la tabla Q
-                self.Q.setdefault(estado, {})
-                self.Q[estado][accion] = self.Q[estado].get(accion, 0) + self.alpha * (recompensa + self.gamma * max(self.Q.get(nuevo_estado, {}).values(), default=0) - self.Q[estado][accion])
+                if estado not in self.Q:
+                    self.Q[estado] = [0, 0, 0]
 
-                estado = nuevo_estado
+                best_action = max(self.Q[estado])
+                self.Q[estado_anterior][accion] += 0.05 * (recompensa - self.Q[estado_anterior][accion] + best_action)
+                estado_anterior = estado
 
-                # Terminar el episodio si el juego ha terminado (puedes ajustar la condición)
-                if self.juego.longitud <= 0:
-                    break
-
-    def obtener_estado(self):
-        # Devuelve una representación del estado actual del juego
-        # Aquí puedes incluir la posición de la serpiente y la posición de la comida
-        posicion = self.juego.posicion_serpiente[0]  # La cabeza de la serpiente
-        return (posicion, tuple(self.juego.posicion_serpiente), self.juego.direccion)
-
-    def calcular_recompensa(self):
-        # Aquí defines la lógica para calcular la recompensa
-        if self.juego.longitud > len(self.juego.posicion_serpiente):
-            return 1  # Comer
-        elif self.juego.posicion_serpiente[0] in self.juego.posicion_serpiente[1:] or \
-             self.juego.posicion_serpiente[0][0] < 0 or self.juego.posicion_serpiente[0][0] >= self.juego.tamano or \
-             self.juego.posicion_serpiente[0][1] < 0 or self.juego.posicion_serpiente[0][1] >= self.juego.tamano:
-            return -1  # Chocar
-        return 0  # Otra situación
+            i += 1
+            print(partidas)
+        print("Entrenamiento completado")
+        self.save()
 
     def save(self):
         if self.path is not None:

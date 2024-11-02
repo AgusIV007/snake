@@ -43,14 +43,43 @@ class IA():
 
     # Juega al juego hasta que este termine, cada vez que mueve (en cada step) decide cual es la mejor accion segun el diccionario Q.
     def jugar(self):
+        direcion_nueva = random.choice([0, 1, 2])
+        estado, recompensa, termino = self.juego.step(direcion_nueva)
         while True:
-            direcion_nueva = random.choice([0, 1, 2])
-            step = self.juego.step(direcion_nueva)
-            print(step)
-            if step != None and step[2]: 
-                break
-            pygame.time.delay(300)
+            if estado not in self.Q:
+                self.Q[estado] = [0, 0, 0]
+            direcion_nueva = self.obtener_mejor_opcion(self.Q[estado])
+            print(self.Q, recompensa)
+            pygame.time.delay(20)
+            nuevo_estado, recompensa, termino = self.juego.step(direcion_nueva)
+            mejor_opcion = [0, 0, 0]
+            if nuevo_estado in self.Q:
+                mejor_opcion = self.Q[nuevo_estado]
+            self.Q[estado][direcion_nueva] += int(0.05 * (recompensa * 20 - self.Q[estado][direcion_nueva] + self.obtener_mejor_opcion(mejor_opcion)))
+            estado = nuevo_estado
+            # if step != None and step[2]: 
+            #     break
 
+    def obtener_mejor_opcion(self, estado):
+        if estado[0] == estado[1] and estado[1] == estado[2]:
+            return random.choice([0, 1, 2])
+        if estado[0] == estado[1]:
+            if estado[0] > estado[2]:
+                return random.choice([0, 1])
+            else:
+                return 2
+        if estado[0] == estado[2]:
+            if estado[0] > estado[1]:
+                return random.choice([0, 2])
+            else:
+                return 1
+        if estado[2] == estado[1]:
+            if estado[2] > estado[0]:
+                return random.choice([0, 1])
+            else:
+                return 0
+        return 0
+        
     # Juega el juego muchas veces y en cada vez completa la informacion de la tabla Q, en base al aprendizaje observado.
     def entrenar(self):
         partidas = 0
